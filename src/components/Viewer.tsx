@@ -107,10 +107,13 @@ export default function Viewer() {
     socket.on("video:sync", (state: VideoState) => {
       setVideoState(state);
       if (!isHost && player) {
-        player.seekTo(state.currentTime);
-        if (state.status === "playing") {
+        const diff = Math.abs(player.getCurrentTime() - state.currentTime);
+        if (diff > 0.8) {
+          player.seekTo(state.currentTime);
+        }
+        if (state.status === "playing" && player.getPlayerState() !== 1) {
           player.playVideo();
-        } else {
+        } else if (state.status === "paused" && player.getPlayerState() !== 2) {
           player.pauseVideo();
         }
       }
@@ -163,6 +166,7 @@ export default function Viewer() {
 
   // Update current time continuously
   useEffect(() => {
+    let syncInterval: number | null = null;
     if (player) {
       timerRef.current = window.setInterval(async () => {
         const time = await player.getCurrentTime();
@@ -170,11 +174,22 @@ export default function Viewer() {
           setCurrentTime(time);
         }
       }, 100);
+
+      if (isHost) {
+        syncInterval = window.setInterval(async () => {
+          const state = await player.getPlayerState();
+          if (state === 1) { // playing
+            const time = await player.getCurrentTime();
+            socket.emit("host:sync", { roomId, currentTime: time });
+          }
+        }, 2000);
+      }
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (syncInterval) clearInterval(syncInterval);
     };
-  }, [player]);
+  }, [player, isHost, roomId]);
 
   const onReady = (event: YouTubeEvent) => {
     setPlayer(event.target);
