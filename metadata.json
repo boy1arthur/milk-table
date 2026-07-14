@@ -1,0 +1,6 @@
+{
+  "name": "Milk Table",
+  "description": "Co-watching platform for sermons with synchronized interactive subtitles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

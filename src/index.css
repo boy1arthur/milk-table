@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-milk-bg: #F4F1EA;
+  --color-milk-text: #3D3935;
+  --color-milk-panel: #EBE6DC;
+  --color-milk-border: #DCD6CB;
+  --color-milk-accent: #7A8B76;
+  --color-milk-muted: #8C8781;
+  --color-milk-dark: #5A5550;
+  --color-milk-msg: #E4E0D6;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
