@@ -107,11 +107,7 @@ export default function Viewer() {
     socket.on("video:sync", (state: VideoState) => {
       setVideoState(state);
       if (!isHost && player) {
-        let timeToSeek = state.currentTime;
-        if (state.status === "playing" && state.timestamp) {
-          timeToSeek += (Date.now() - state.timestamp) / 1000;
-        }
-        player.seekTo(timeToSeek);
+        player.seekTo(state.currentTime);
         if (state.status === "playing") {
           player.playVideo();
         } else {
@@ -123,11 +119,7 @@ export default function Viewer() {
     socket.on("video:play", (state: VideoState) => {
       setVideoState(state);
       if (!isHost && player) {
-        let timeToSeek = state.currentTime;
-        if (state.timestamp) {
-          timeToSeek += (Date.now() - state.timestamp) / 1000;
-        }
-        player.seekTo(timeToSeek);
+        player.seekTo(state.currentTime);
         player.playVideo();
       }
     });
@@ -188,11 +180,7 @@ export default function Viewer() {
     setPlayer(event.target);
     // Initial sync
     if (videoState) {
-      let timeToSeek = videoState.currentTime;
-      if (videoState.status === "playing" && videoState.timestamp) {
-        timeToSeek += (Date.now() - videoState.timestamp) / 1000;
-      }
-      event.target.seekTo(timeToSeek);
+      event.target.seekTo(videoState.currentTime);
       if (videoState.status === "playing") {
         event.target.playVideo();
       } else {
