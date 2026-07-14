@@ -35,6 +35,8 @@ export default function Viewer() {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const isHostRef = useRef(isHost);
   const pendingSyncRef = useRef<VideoState | null>(null); // player 준비 전 수신된 sync 보관
+  // ★ 버퍼링 보정용: 재생 명령 수신 시점의 서버 상태 보관
+  const playCommandRef = useRef<{ currentTime: number; timestamp: number } | null>(null);
 
   const timerRef = useRef<number | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -145,7 +147,9 @@ export default function Viewer() {
     socket.on("video:play", (state: VideoState) => {
       setVideoState(state);
       if (isHostRef.current || !playerRef.current) return;
-      const timeToSeek = state.currentTime + (state.timestamp ? (Date.now() - state.timestamp) / 1000 : 0);
+      // 서버 상태 보관 → 버퍼링 끝난 시점(onStateChange PLAYING)에 재보정
+      playCommandRef.current = { currentTime: state.currentTime, timestamp: state.timestamp ?? Date.now() };
+      const timeToSeek = state.currentTime + (Date.now() - (state.timestamp ?? Date.now())) / 1000;
       playerRef.current.seekTo(timeToSeek, true);
       playerRef.current.playVideo();
     });
@@ -230,11 +234,29 @@ export default function Viewer() {
       });
   };
 
-  // ★ onStateChange: 방장만, 스킵 가드로 루프 방지
+  // ★ onStateChange: 방장 + 조원 버퍼링 보정
   const seekingRef = useRef(false);
   const onStateChange = (event: YouTubeEvent) => {
-    if (!isHostRef.current) return;
-    if (seekingRef.current) return; // seekTo 중 발생한 이벤트 무시
+    // ── 조원: 버퍼링 끝나고 PLAYING 전환 시점에 재보정
+    if (!isHostRef.current) {
+      if (event.data === 1 && playCommandRef.current) {
+        // 버퍼링에 걸린 실제 시간만큼 앞으로 보정
+        const cmd = playCommandRef.current;
+        const correctedTime = cmd.currentTime + (Date.now() - cmd.timestamp) / 1000;
+        const actualTime = event.target.getCurrentTime();
+        // 0.3초 이상 차이날 때만 보정 (작은 오차는 무시)
+        if (Math.abs(actualTime - correctedTime) > 0.3) {
+          seekingRef.current = true;
+          event.target.seekTo(correctedTime, true);
+          setTimeout(() => { seekingRef.current = false; }, 300);
+        }
+        playCommandRef.current = null; // 보정 완료
+      }
+      return;
+    }
+
+    // ── 방장: seekTo 중 발생한 이벤트 무시
+    if (seekingRef.current) return;
 
     const time = event.target.getCurrentTime();
     if (event.data === 1) { // playing
