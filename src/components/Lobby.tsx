@@ -24,24 +24,26 @@ export default function Lobby() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-milk-bg)] flex items-center justify-center p-6 font-sans text-[var(--color-milk-text)]">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-[var(--color-milk-accent)] rounded-2xl mx-auto flex items-center justify-center shadow-sm">
-            <BookOpen className="w-8 h-8 text-[var(--color-milk-bg)]" />
+    <div className="min-h-screen bg-[var(--color-milk-bg)] flex items-center justify-center p-6 lg:p-12 font-sans text-[var(--color-milk-text)]">
+      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+        {/* Left Side: Branding */}
+        <div className="flex-1 text-center lg:text-left space-y-8">
+          <div className="w-20 h-20 bg-[var(--color-milk-accent)] rounded-2xl mx-auto lg:mx-0 flex items-center justify-center shadow-sm">
+            <BookOpen className="w-10 h-10 text-[var(--color-milk-bg)]" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-milk-text)]">Milk Table</h1>
-          <div className="space-y-3 pt-2 text-center">
-            <p className="text-xl md:text-2xl text-[var(--color-milk-dark)] font-medium italic">
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[var(--color-milk-text)]">Milk Table</h1>
+            <p className="text-xl md:text-2xl text-[var(--color-milk-dark)] font-medium italic max-w-lg mx-auto lg:mx-0 leading-relaxed">
               "두세 사람이 내 이름으로 모인 곳에는 나도 그들 중에 있느니라"
             </p>
-            <p className="text-sm md:text-base text-[var(--color-milk-muted)] font-bold">
+            <p className="text-base text-[var(--color-milk-muted)] font-bold">
               (Matthew 18: 20)
             </p>
           </div>
         </div>
 
-        <div className="space-y-6 bg-[var(--color-milk-panel)] p-8 rounded-3xl border border-[var(--color-milk-border)] shadow-sm">
+        {/* Right Side: Form Panel */}
+        <div className="w-full max-w-md shrink-0 space-y-6 bg-[var(--color-milk-panel)] p-8 rounded-3xl border border-[var(--color-milk-border)] shadow-xl shadow-black/5">
           {/* Name Input */}
           <div className="space-y-3">
             <label className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wide text-[var(--color-milk-muted)]">

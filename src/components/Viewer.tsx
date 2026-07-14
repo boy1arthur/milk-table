@@ -163,6 +163,8 @@ export default function Viewer() {
       event.target.seekTo(videoState.currentTime);
       if (videoState.status === "playing") {
         event.target.playVideo();
+      } else {
+        event.target.pauseVideo();
       }
     }
   };
@@ -491,9 +493,9 @@ export default function Viewer() {
                         className="flex-1 min-w-[80px] px-2 py-2 text-sm border border-[var(--color-milk-border)] rounded-lg bg-[var(--color-milk-bg)] outline-none focus:ring-2 focus:ring-[var(--color-milk-accent)] disabled:opacity-50 transition-all"
                       >
                         <option value="">끝절</option>
-                        {selectedChapter && startVerse && Array.from(new Set(bibleVerses.slice(1).filter(row => String(row[0]) === String(selectedBook) && String(row[2]) === String(selectedChapter)).map(row => String(row[3])).filter(Boolean)))
-                          .filter(v => parseInt(v, 10) >= parseInt(startVerse, 10))
-                          .map(v => (
+                        {selectedChapter && startVerse && Array.from(new Set<string>(bibleVerses.slice(1).filter(row => String(row[0]) === String(selectedBook) && String(row[2]) === String(selectedChapter)).map(row => String(row[3])).filter(Boolean) as string[]))
+                          .filter((v: string) => parseInt(v, 10) >= parseInt(startVerse, 10))
+                          .map((v: string) => (
                           <option key={v} value={v}>{v}절</option>
                         ))}
                       </select>
