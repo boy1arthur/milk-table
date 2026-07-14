@@ -176,6 +176,14 @@ async function startServer() {
       socket.to(data.roomId).emit("video:seek", room.currentVideo);
     });
 
+    socket.on("host:sync", (data) => {
+      const room = getRoom(data.roomId);
+      room.currentVideo.currentTime = data.currentTime;
+      room.currentVideo.timestamp = Date.now();
+      // Only broadcast sync to others, don't force them to pause/play immediately unless diff is large
+      socket.to(data.roomId).emit("video:sync", room.currentVideo);
+    });
+
     // Chat
     socket.on("chat:message", (data) => {
       const room = getRoom(data.roomId);
