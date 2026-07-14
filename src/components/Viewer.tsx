@@ -29,6 +29,8 @@ export default function Viewer() {
   const [endVerse, setEndVerse] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [newVideoTitle, setNewVideoTitle] = useState("");
+  const [participantsCount, setParticipantsCount] = useState(1);
 
   const timerRef = useRef<number | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -49,9 +51,10 @@ export default function Viewer() {
       await fetch("/api/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, videoId: parsedId, title: "새로운 영상" })
+        body: JSON.stringify({ roomId, videoId: parsedId, title: newVideoTitle || "새로운 영상" })
       });
       setNewVideoUrl("");
+      setNewVideoTitle("");
     } catch (e) {
       console.error("Failed to update video", e);
     }
@@ -100,10 +103,31 @@ export default function Viewer() {
     socket.on("disconnect", () => setIsConnected(false));
     
     socket.on("video:change", (state: VideoState) => setVideoState(state));
+    
+    socket.on("video:sync", (state: VideoState) => {
+      setVideoState(state);
+      if (!isHost && player) {
+        let timeToSeek = state.currentTime;
+        if (state.status === "playing" && state.timestamp) {
+          timeToSeek += (Date.now() - state.timestamp) / 1000;
+        }
+        player.seekTo(timeToSeek);
+        if (state.status === "playing") {
+          player.playVideo();
+        } else {
+          player.pauseVideo();
+        }
+      }
+    });
+
     socket.on("video:play", (state: VideoState) => {
       setVideoState(state);
       if (!isHost && player) {
-        player.seekTo(state.currentTime);
+        let timeToSeek = state.currentTime;
+        if (state.timestamp) {
+          timeToSeek += (Date.now() - state.timestamp) / 1000;
+        }
+        player.seekTo(timeToSeek);
         player.playVideo();
       }
     });
@@ -127,6 +151,10 @@ export default function Viewer() {
 
     socket.on("chat:message", (msg) => {
       setMessages((prev) => [...prev, msg]);
+    });
+
+    socket.on("room:participants", (count: number) => {
+      setParticipantsCount(count);
     });
 
     return () => {
@@ -160,7 +188,11 @@ export default function Viewer() {
     setPlayer(event.target);
     // Initial sync
     if (videoState) {
-      event.target.seekTo(videoState.currentTime);
+      let timeToSeek = videoState.currentTime;
+      if (videoState.status === "playing" && videoState.timestamp) {
+        timeToSeek += (Date.now() - videoState.timestamp) / 1000;
+      }
+      event.target.seekTo(timeToSeek);
       if (videoState.status === "playing") {
         event.target.playVideo();
       } else {
@@ -241,7 +273,7 @@ export default function Viewer() {
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2 text-sm text-[var(--color-milk-muted)] bg-[var(--color-milk-bg)] px-3 py-1.5 rounded-lg border border-[var(--color-milk-border)]">
             <Users className="w-4 h-4" />
-            <span className="font-medium">{roomId}</span>
+            <span className="font-medium">{roomId} (접속: {participantsCount}명)</span>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -301,6 +333,13 @@ export default function Viewer() {
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-milk-muted)]">영상 변경</span>
                 </div>
                 <div className="flex space-x-2">
+                  <input 
+                    type="text" 
+                    placeholder="영상 제목 (선택)" 
+                    className="w-1/3 px-3 py-2 text-sm border border-[var(--color-milk-border)] rounded-lg outline-none focus:ring-2 focus:ring-[var(--color-milk-accent)] bg-[var(--color-milk-bg)]"
+                    value={newVideoTitle}
+                    onChange={(e) => setNewVideoTitle(e.target.value)}
+                  />
                   <input 
                     type="text" 
                     placeholder="유튜브 링크 또는 ID 입력..." 

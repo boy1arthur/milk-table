@@ -139,10 +139,17 @@ async function startServer() {
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
     
+    const broadcastParticipantCount = (roomId: string) => {
+      const roomClients = io.sockets.adapter.rooms.get(roomId);
+      const count = roomClients ? roomClients.size : 0;
+      io.to(roomId).emit("room:participants", count);
+    };
+
     socket.on("join:room", (roomId: string) => {
       socket.join(roomId);
       const room = getRoom(roomId);
       socket.emit("video:sync", room.currentVideo);
+      broadcastParticipantCount(roomId);
     });
 
     // Host controls
@@ -180,6 +187,18 @@ async function startServer() {
       };
       room.messages.push(newMessage);
       io.to(data.roomId).emit("chat:message", newMessage);
+    });
+
+    socket.on("disconnecting", () => {
+      socket.rooms.forEach(roomId => {
+        if (roomId !== socket.id) {
+          setTimeout(() => {
+             const roomClients = io.sockets.adapter.rooms.get(roomId);
+             const count = roomClients ? roomClients.size : 0;
+             io.to(roomId).emit("room:participants", count);
+          }, 0);
+        }
+      });
     });
 
     socket.on("disconnect", () => {
